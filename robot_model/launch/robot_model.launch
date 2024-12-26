@@ -27,7 +27,7 @@
     
 
     <!-- Rviz Config -->
-    <arg name="rviz_config_file" default="$(find robot_model)/rviz_config/rviz_config.rviz" />
+    <arg name="rviz_config_file" default="$(find robot_model)/rviz_config/rviz_config2.rviz" />
 
     
     <!-- Rviz -->
