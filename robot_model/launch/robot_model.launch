@@ -12,8 +12,7 @@
         <arg name="verbose"         value="false" />
     </include>
 
-
-    <!--                                         pkg       xacro file name -->
+    <!-- Load the robot model to robot_description parameter -->
     <param command="$(find xacro)/xacro $(find robot_model)/urdf/robot_model.urdf.xacro" name="robot_description" />
 
      <!--  spown the robot model in gazebo   -->
@@ -21,17 +20,18 @@
 
 
     <!-- Send fake joint values-->
-    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
-        <param name="use_gui" value="false" />
-    </node>
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"> <param name="use_gui" value="false" /> </node>
 
     <!-- Send robot states to tf -->
-    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
-        respawn="false" output="screen" />
-        
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen" />
+    
+
+    <!-- Rviz Config -->
+    <arg name="rviz_config_file" default="$(find robot_model)/rviz_config/rviz_config.rviz" />
+
     
     <!-- Rviz -->
-    <node name="rviz" pkg="rviz" type="rviz" output="screen" />
+    <node name="rviz" pkg="rviz" type="rviz" output="screen"  args="-d $(arg rviz_config_file)"/>
 
     
 </launch>
