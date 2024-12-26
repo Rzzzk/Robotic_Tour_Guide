@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<robot name="tour_guide_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+
+  <gazebo>
+    <plugin filename="libgazebo_ros_control.so" name="gazebo_ros_control">
+      <robotNamespace>tour_guide_robot</robotNamespace>
+    </plugin>
+  </gazebo>
+
+
+  <gazebo>
+    <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+      <updateRate>20</updateRate>
+      <robotBaseFrame>base_footprint</robotBaseFrame>
+      <leftJoint>left_wheel_joint</leftJoint>
+      <rightJoint>right_wheel_joint</rightJoint>
+      <wheelSeparation>0.5</wheelSeparation>
+      <wheelDiameter>0.2</wheelDiameter>
+      <wheelAcceleration>2.0</wheelAcceleration>
+      <wheelTorque>100</wheelTorque>
+      <commandTopic>cmd_vel</commandTopic>
+      <odometryTopic>odom</odometryTopic>
+      <odometryFrame>odom</odometryFrame>
+      <odometrySource>1</odometrySource>
+      <publishWheelTF>false</publishWheelTF>
+      <publishOdomTF>true</publishOdomTF>
+      <publishOdom>true</publishOdom>
+      <publishWheelJointState>true</publishWheelJointState>
+      <legacyMode>false</legacyMode>
+      <alwaysOn>true</alwaysOn>
+    </plugin>
+  </gazebo>
+
+  <gazebo reference="lidar_link">
+    <sensor type="ray" name="lidar_link">
+      <pose>0 0 0 0 0 0</pose>
+      <visualize>true</visualize>
+      <update_rate>10</update_rate>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>360</samples>
+            <min_angle>-1.74533</min_angle>
+            <max_angle>1.74533</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.3</min>
+          <max>10.0</max>
+        </range>
+      </ray>
+      <plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_laser.so">
+        <topicName>/scan_filtered</topicName>
+        <frameName>lidar_link</frameName>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+</robot>

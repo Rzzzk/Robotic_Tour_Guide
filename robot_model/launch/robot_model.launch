@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+
+<launch>
+    <!-- World File -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(find robot_model)/worlds/world3.world" /> <!-- open my world -->
+        <arg name="debug"           value="false" />
+        <arg name="gui"             value="true"  />
+        <arg name="paused"          value="false" />
+        <arg name="use_sim_time"    value="true"  />
+        <arg name="headless"        value="false" />
+        <arg name="verbose"         value="false" />
+    </include>
+
+
+    <!--                                         pkg       xacro file name -->
+    <param command="$(find xacro)/xacro $(find robot_model)/urdf/robot_model.urdf.xacro" name="robot_description" />
+
+     <!--  spown the robot model in gazebo   -->
+    <node pkg="gazebo_ros" name="spawn_urdf" type="spawn_model"  args="-param robot_description -urdf -model rz_car" />
+
+
+    <!-- Send fake joint values-->
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+        <param name="use_gui" value="false" />
+    </node>
+
+    <!-- Send robot states to tf -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+        respawn="false" output="screen" />
+        
+    
+    <!-- Rviz -->
+    <node name="rviz" pkg="rviz" type="rviz" output="screen" />
+
+    
+</launch>
