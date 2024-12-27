@@ -16,7 +16,7 @@
     <param command="$(find xacro)/xacro $(find robot_model)/urdf/robot_model.urdf.xacro" name="robot_description" />
 
      <!--  spown the robot model in gazebo   -->
-    <node pkg="gazebo_ros" name="spawn_urdf" type="spawn_model"  args="-param robot_description -urdf -model rz_car" />
+    <node pkg="gazebo_ros" name="spawn_urdf" type="spawn_model"  args="-param robot_description -urdf -model tour_guide_robot" />
 
 
     <!-- Send fake joint values-->
