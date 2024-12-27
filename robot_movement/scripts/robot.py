@@ -3,9 +3,15 @@
 # Importing the required libraries
 import point_of_interests
 from map_pose import MapPose
+
 import rospy
+from std_msgs.msg import String
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from geometry_msgs.msg import PoseStamped
+from actionlib_msgs.msg import GoalStatusArray
+
+
+import time
 
 
 # Class definition
@@ -14,11 +20,17 @@ class Robot:
 
     # Constructor
     def __init__(self):
-        self.map_pose = MapPose(0.0, 0.0, 0.0, 0.0)
+        
+        # Initialize the map pose
         self.home_pose = MapPose(0.0, 0.0, 0.0, 0.0)
         self.goal_pose = MapPose(0.0, 0.0, 0.0, 0.0)
+        self.current_pse = MapPose(0.0, 0.0, 0.0, 0.0)
+
+
         self.goal_accepted = False
         self.goal_reached = False
+        self.general_status = "Idle"
+
 
 
         # Initialize the node
@@ -31,6 +43,18 @@ class Robot:
         self.pub_goal = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=10)
 
 
+        # Initialize the publisher
+        self.pub_status = rospy.Publisher('/robot_status', String, queue_size=10)
+
+        # Initialize the subscriber for the move_base status
+        rospy.Subscriber('/move_base/status', GoalStatusArray, self.update_goal_status)
+
+
+
+        # Wait for the node to initialize        
+        time.sleep(2)
+
+
 
     # Callback function to update the map pose
     def update_map_pose(self, msg):
@@ -39,11 +63,55 @@ class Robot:
         y = pose.position.y
         z = pose.orientation.z
         w = pose.orientation.w
-        self.map_pose.set_pose(x, y, z, w)
+        self.current_pse.set_pose(x, y, z, w)
         rospy.loginfo(f"Updated pose: x={x}, y={y}, z={z}, w={w}")
+    
+
+    # Callback function to update the goal status
+    def update_goal_status(self, msg):
+
+        # Check if the status_list is not empty
+        if msg.status_list:
+            
+            # Process the latest goal status
+            latest_status = msg.status_list[-1].status
+            
+            if latest_status == 3:  # Goal reached
+                self.goal_reached = True
+                self.goal_accepted = False
+                rospy.loginfo("Goal reached")
+            
+            elif latest_status == 1:  # Goal accepted
+                self.goal_accepted = True
+                self.goal_reached = False
+                rospy.loginfo("Goal accepted")
+            
+            else:
+                self.goal_accepted = False
+                self.goal_reached = False
+                rospy.loginfo(f"Other goal status: {latest_status}")
 
 
-    # Constructor
+    # Function to check if the goal is accepted
+    def is_goal_accepted(self):
+        return self.goal_accepted
+
+    # Function to check if the goal is reached   
+    def is_goal_reached(self):
+        return self.goal_reached
+
+    # Function to get the current map pose
+    def set_general_status(self, status)->String:
+        self.general_status = status
+        self.pub_goal.publish(status)
+    
+
+    # Function to get the current map pose
+    def get_current_pose(self):
+        return self.current_pse
+
+
+    # Function to publish the goal pose
     def publish_goal_pose(self, gaol)->MapPose:
 
         self.goal_pose = gaol
