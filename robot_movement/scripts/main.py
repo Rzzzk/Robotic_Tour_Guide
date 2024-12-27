@@ -20,13 +20,17 @@ def main():
 
     for poi in POIx:
         
+        # publish the goal pose
         while not tour_guide.is_goal_accepted():
             tour_guide.publish_goal_pose(poi.map_pose)
-        
-        while not tour_guide.is_goal_reached():
-            pass
 
-        
+
+        # wait for the robot to reach the goal
+        while not tour_guide.is_goal_reached():
+            tour_guide.publish_general_status(f"Moving to {poi.name}, point ID {poi.ID}") 
+
+        # the robot has reached the goal
+        tour_guide.publish_general_status(f"Reached {poi.name}, point ID {poi.ID}")
         time.sleep(10)
 
 

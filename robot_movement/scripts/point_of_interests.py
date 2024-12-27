@@ -4,9 +4,9 @@ from map_pose import MapPose
 class PointOfInterest:
     def __init__(self, name, id, type, audio_path, audio_name, x, y, z, w): # Constructor
         self.map_pose = MapPose(x, y, z, w)
-        self.name = "none"
-        self.type = "none"
-        self.ID = 0
+        self.name = name
+        self.type = type
+        self.ID = id
         self.audio_path = "none"
         self.audio_file = "none"
         

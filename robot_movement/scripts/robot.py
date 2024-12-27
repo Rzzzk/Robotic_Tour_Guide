@@ -22,7 +22,6 @@ class Robot:
     def __init__(self):
         
         # Initialize the map pose
-        self.home_pose = MapPose(0.0, 0.0, 0.0, 0.0)
         self.goal_pose = MapPose(0.0, 0.0, 0.0, 0.0)
         self.current_pse = MapPose(0.0, 0.0, 0.0, 0.0)
 
@@ -42,14 +41,11 @@ class Robot:
         # Initialize the publisher
         self.pub_goal = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=10)
 
-
         # Initialize the publisher
         self.pub_status = rospy.Publisher('/robot_status', String, queue_size=10)
 
         # Initialize the subscriber for the move_base status
         rospy.Subscriber('/move_base/status', GoalStatusArray, self.update_goal_status)
-
-
 
         # Wait for the node to initialize        
         time.sleep(2)
@@ -64,7 +60,9 @@ class Robot:
         z = pose.orientation.z
         w = pose.orientation.w
         self.current_pse.set_pose(x, y, z, w)
-        rospy.loginfo(f"Updated pose: x={x}, y={y}, z={z}, w={w}")
+        rospy.loginfo(f"Updated pose:")
+        rospy.loginfo(f"x={x}, y={y}")
+        rospy.loginfo(f"z={z}, w={w}")
     
 
     # Callback function to update the goal status
@@ -109,6 +107,11 @@ class Robot:
     # Function to get the current map pose
     def get_current_pose(self):
         return self.current_pse
+    
+    # Function to publish the general status
+    def publish_general_status(self, status):
+        self.general_status = status
+        self.pub_status.publish(status)
 
 
     # Function to publish the goal pose
