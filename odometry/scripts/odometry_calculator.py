@@ -1,8 +1,10 @@
-
+#!/usr/bin/env python3
 
 
 import rospy
 import tf
+import tf2_ros
+import tf_conversions
 from std_msgs.msg import Int32MultiArray
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import TransformStamped, Quaternion, Point
@@ -12,11 +14,14 @@ class OdometryCalculator:
     def __init__(self):
         
         """Initialize the odometry calculator with robot parameters and ROS setup"""
-        
+        # Initialize ROS node
+        rospy.init_node('odometry_calculator')
+
+
         # Robot physical parameters - ADJUST THESE FOR YOUR ROBOT
-        self.WR  = 0.0325    # Wheel radius in meters
-        self.WS  = 0.295     # Wheels Separation in meters
-        self.PPR = 1440      # Encoder pulse per revolution
+        self.WR  = 0.113    # Wheel radius in meters
+        self.WS  = 0.315     # Wheels Separation in meters
+        self.PPR = 11440      # Encoder pulse per revolution
         
         # Constants for 32-bit integer overflow detection
         self.MAX_TICKS = 2**31 - 1        # Maximum value for 32-bit signed integer
@@ -37,19 +42,24 @@ class OdometryCalculator:
         self.prev_left_ticks = None    # Previous left encoder reading
         self.prev_right_ticks = None   # Previous right encoder reading
 
-    
+        self.total_left_ticks = 0
+        self.total_left_ticks = 0
+
         self.first_encoder_reading = True  # Flag for initializing first encoder reading
 
                 
-        # Initialize ROS node
-        rospy.init_node('odometry_calculator')
+        
 
         # Set up ROS publishers and subscribers
         self.odom_pub    = rospy.Publisher('odom', Odometry, queue_size=10) # publish the odometry
-        self.encoder_sub = rospy.Subscriber('encoder_ticks', Int32MultiArray, self.encoder_callback) # subscribe to the encoder ticks
-        self.tf_broadcaster = tf.TransformBroadcaster()
-        
+        self.encoder_sub = rospy.Subscriber('/encoder_topic', Int32MultiArray, self.encoder_callback) # subscribe to the encoder ticks
+        # Set up TF2 broadcaster for coordinate transforms
+        self.br = tf2_ros.TransformBroadcaster()
 
+        # Create timer for publishing odometry at fixed rate (20Hz)
+        self.timer = rospy.Timer(rospy.Duration(0.05), self.publish_odometry)
+
+    
     def handle_overflow(self, current_tick, last_tick):
         """
         Handle encoder tick overflow for a single encoder
@@ -92,11 +102,18 @@ class OdometryCalculator:
         self.prev_right_ticks = msg.data[0]
         self.prev_left_ticks = msg.data[1]
 
+
+        self.total_right_ticks =+ msg.data[0]
+        self.total_left_ticks =+ msg.data[1]
+
+        # log the encoder ticks
+        rospy.loginfo("Right ticks: %d, Left ticks: %d", delta_right_ticks, delta_left_ticks)
+
         # Update odometry
         self.update_odometry(delta_right_ticks, delta_left_ticks)
 
 
-    def update_odometry(self, Nr, Nl, dt):
+    def update_odometry(self, Nr, Nl):
 
         # Get current time
         current_time = rospy.Time.now()
@@ -122,48 +139,49 @@ class OdometryCalculator:
 
         # Normalize theta to the range [-pi, pi]
         self.theta = math.atan2(math.sin(self.theta), math.cos(self.theta))
-
-        # Create odometry message
-        odom_msg = Odometry()
-        odom_msg.header.stamp = current_time
-        odom_msg.header.frame_id = "odom"
-        odom_msg.child_frame_id = "base_link"
-
+    
+    def publish_odometry(self, event):
+        """
+        Publish odometry message and broadcast transform
+        
+        Args:
+            event: Timer event (not used)
+        """
+        # Create and fill odometry message
+        odom = Odometry()
+        odom.header.stamp = rospy.Time.now()
+        odom.header.frame_id = "odom"      # Parent frame
+        odom.child_frame_id = "base_link"  # Robot frame
+        
         # Set position
-        odom_msg.pose.pose.position.x = self.x
-        odom_msg.pose.pose.position.y = self.y
-        odom_msg.pose.pose.position.z = 0.0
-
-        # Set orientation (quaternion)
-        odom_quat = tf.transformations.quaternion_from_euler(0, 0, self.theta)
-        odom_msg.pose.pose.orientation = Quaternion(*odom_quat)
-
-        # Set velocity
-        odom_msg.twist.twist.linear.x = v
-        odom_msg.twist.twist.angular.z = omega
-
+        odom.pose.pose.position = Point(self.x, self.y, 0.0)
+        
+        # Convert euler angle to quaternion and set orientation
+        q = tf_conversions.transformations.quaternion_from_euler(0, 0, self.theta)
+        odom.pose.pose.orientation = Quaternion(*q)
+        
         # Publish odometry message
-        self.odom_pub.publish(odom_msg)
+        self.odom_pub.publish(odom)
+        
+        # Create and broadcast transform
+        t = TransformStamped()
+        t.header.stamp = odom.header.stamp
+        t.header.frame_id = "odom"
+        t.child_frame_id = "base_link"
+        t.transform.translation.x = self.x
+        t.transform.translation.y = self.y
+        t.transform.translation.z = 0.0
+        t.transform.rotation = odom.pose.pose.orientation
+        
+        self.br.sendTransform(t)
 
-        # Broadcast transform (for visualization in RViz)
-        self.tf_broadcaster.sendTransform(
-            (self.x, self.y, 0.0),
-            odom_quat,
-            current_time,
-            "base_link",
-            "odom"
-        )
-
-
-
-def main():
-    odom_calc = OdometryCalculator()
-    rospy.spin()
 
 
 if __name__ == '__main__':
     try:
-        main()
+        odom_calc = OdometryCalculator()
+        
+        rospy.spin()
     except rospy.ROSInterruptException:
         pass
 

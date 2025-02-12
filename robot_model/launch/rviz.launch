@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+
+<launch>
+    <!-- Load the robot model to robot_description parameter -->
+    <param command="$(find xacro)/xacro $(find robot_model)/urdf/robot_model.urdf.xacro" name="robot_description" />
+    
+    <!-- Send joint state publisher -->
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+        <param name="use_gui" value="false" />
+    </node>
+
+    <!-- Send robot state publisher -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+        respawn="false" output="screen" />
+
+    <node pkg="rviz" type="rviz" name="rviz" output="screen"> </node>
+    
+</launch>
