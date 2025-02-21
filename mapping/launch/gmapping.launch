@@ -3,6 +3,9 @@
 
 <launch>
 
+    <node pkg="tf" type="static_transform_publisher" name="base_to_laser" 
+          args="0.2 0.0 0.07 0 0 0 base_footprint laser_link 10"/>
+
     <arg name="scan_topic" default="/scan_filtered"/>
     
     <param name="use_sim_time" value="true"/>
@@ -41,5 +44,5 @@
       <param name="lasamplerange" value="0.005"/>
       <param name="lasamplestep" value="0.005"/>
     </node>
- 
+
 </launch>

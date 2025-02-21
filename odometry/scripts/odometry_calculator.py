@@ -106,9 +106,6 @@ class OdometryCalculator:
         self.total_right_ticks =+ msg.data[0]
         self.total_left_ticks =+ msg.data[1]
 
-        # log the encoder ticks
-        rospy.loginfo("Right ticks: %d, Left ticks: %d", delta_right_ticks, delta_left_ticks)
-
         # Update odometry
         self.update_odometry(delta_right_ticks, delta_left_ticks)
 
@@ -125,6 +122,10 @@ class OdometryCalculator:
         delta_theta_left  = (2 * math.pi * Nl) / self.PPR  # theta_l = (2*pi*Nl)/PPR
 
         # Calculate wheel velocities (in radians per second)
+
+        if dt < 1e-6:  # Set a very small threshold
+            dt = 1e-6  # Assign a minimum value
+        
         omega_left = delta_theta_left / dt
         omega_right = delta_theta_right / dt
 
@@ -151,7 +152,7 @@ class OdometryCalculator:
         odom = Odometry()
         odom.header.stamp = rospy.Time.now()
         odom.header.frame_id = "odom"      # Parent frame
-        odom.child_frame_id = "base_link"  # Robot frame
+        odom.child_frame_id = "base_footprint"    # Robot frame
         
         # Set position
         odom.pose.pose.position = Point(self.x, self.y, 0.0)
@@ -166,8 +167,8 @@ class OdometryCalculator:
         # Create and broadcast transform
         t = TransformStamped()
         t.header.stamp = odom.header.stamp
-        t.header.frame_id = "odom"
-        t.child_frame_id = "base_link"
+        t.header.frame_id = "odom" 
+        t.child_frame_id = "base_footprint"
         t.transform.translation.x = self.x
         t.transform.translation.y = self.y
         t.transform.translation.z = 0.0
