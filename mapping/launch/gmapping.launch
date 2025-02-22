@@ -3,8 +3,9 @@
 
 <launch>
 
-    <node pkg="tf" type="static_transform_publisher" name="base_to_laser" 
-          args="0.2 0.0 0.07 0 0 0 base_footprint laser_link 10"/>
+    <!-- Temporary static transform (remove after gmapping starts working) -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="temp_map_to_odom"
+      args="0 0 0 0 0 0 map odom" />
 
     <arg name="scan_topic" default="/scan_filtered"/>
     

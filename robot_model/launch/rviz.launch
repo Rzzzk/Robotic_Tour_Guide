@@ -13,6 +13,12 @@
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
         respawn="false" output="screen" />
 
-    <node pkg="rviz" type="rviz" name="rviz" output="screen"> </node>
+        <!-- Rviz Config -->
+    <arg name="rviz_config_file" default="$(find robot_model)/rviz_config/robot_view.rviz" />
+
+    
+    <!-- Rviz -->
+    <node name="rviz" pkg="rviz" type="rviz" output="screen"  args="-d $(arg rviz_config_file)"/>
+
     
 </launch>
